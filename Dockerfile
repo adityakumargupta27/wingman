@@ -12,4 +12,4 @@ COPY . .
 
 # Start PM2
 RUN npm install pm2 -g
-CMD ["pm2-runtime", "pm2.config.js"]
+CMD ["pm2-runtime", "pm2.config.cjs"]

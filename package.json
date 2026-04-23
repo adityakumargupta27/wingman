@@ -11,15 +11,23 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
-    "sql.js": "^1.12.0",
+    "axios": "^1.15.2",
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
-    "playwright": "^1.42.1"
+    "googleapis": "^171.4.0",
+    "pdf-parse": "^1.1.1",
+    "playwright": "^1.42.1",
+    "sql.js": "^1.12.0"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["discord-bot", "career-intelligence", "gemini-api", "job-search"],
+  "keywords": [
+    "discord-bot",
+    "career-intelligence",
+    "gemini-api",
+    "job-search"
+  ],
   "author": "Aditya Kumar Gupta",
   "license": "MIT",
   "homepage": "https://github.com/adityakumargupta27/wingman",

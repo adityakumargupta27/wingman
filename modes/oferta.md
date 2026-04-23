@@ -45,6 +45,7 @@ Suggest 2 specific stories from the candidate's background that solve the JD's b
 ## ════════════════════════════════════════════════════
 - **Comp Range**: Estimated range for this role/tier.
 - **Legitimacy**: High Confidence | Proceed with Caution | Suspicious (Ghost Job detect).
+  *Note: Flags for "Suspicious" include: missing salary in high-transparency states, overly generic JD text, "evergreen" posting indicators, or companies known for ghosting.*
 
 ## ════════════════════════════════════════════════════
 ## BLOCK G: MACHINE READABLE SUMMARY
@@ -55,4 +56,5 @@ ROLE: {{role}}
 SCORE: {{global_score}}
 ARCHETYPE: {{archetype}}
 LEGITIMACY: {{legitimacy}}
+STORIES: {{stories}}
 ---END_SUMMARY---

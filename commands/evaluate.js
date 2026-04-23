@@ -6,8 +6,8 @@
  * Creates a thread for the full report, sends a summary embed inline.
  */
 
-import { SlashCommandBuilder, ThreadAutoArchiveDuration } from 'discord.js';
-import { upsertUser, getCV, saveApplication } from '../lib/db.js';
+import { SlashCommandBuilder, ThreadAutoArchiveDuration, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { upsertUser, getCV, saveApplication, updateApplicationThread } from '../lib/db.js';
 import { evaluateJD } from '../lib/gemini.js';
 import { buildEvaluationPrompt } from '../lib/prompt-engine.js';
 import { parseScore } from '../lib/score-parser.js';
@@ -21,7 +21,7 @@ export const data = new SlashCommandBuilder()
   .addStringOption(opt =>
     opt.setName('url')
       .setDescription('URL of the job posting')
-      .setRequired(false)
+      .setRequired(true)
   )
   .addStringOption(opt =>
     opt.setName('jd')
@@ -57,17 +57,48 @@ export async function execute(interaction) {
       await interaction.editReply(`✅ **Job description scraped!** Now evaluating against your CV...`);
     }
 
-    const cvText       = getCV(discordId);
+    const cvText       = await getCV(discordId);
     const systemPrompt = buildEvaluationPrompt(cvText);
     const rawResponse  = await evaluateJD({ systemPrompt, jdText });
-    const { company, role, score, archetype, legitimacy, rawReport } = parseScore(rawResponse);
+    const { company, role, score, archetype, legitimacy, stories, rawReport } = parseScore(rawResponse);
 
-    // Send summary embed
+    // Save to tracker
+    const appId = saveApplication({
+      discordId,
+      company,
+      role,
+      score,
+      archetype,
+      legitimacy,
+      jdSnippet: jdText.slice(0, 500),
+      reportText: rawReport,
+      storiesJson: stories,
+    });
+
+    // Send summary embed with buttons
     const evalEmbed = buildEvalEmbed({ company, role, score, archetype, legitimacy });
     if (url) {
         evalEmbed.setURL(url);
     }
-    const reply     = await interaction.editReply({ content: '', embeds: [evalEmbed] });
+
+    const buttons = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId(`save_story_${appId}`)
+          .setLabel('📥 Save Stories to Bank')
+          .setStyle(ButtonStyle.Success)
+          .setDisabled(!stories || stories === 'null'),
+        new ButtonBuilder()
+          .setCustomId(`reachout_${appId}`)
+          .setLabel('💬 Generate Reachout')
+          .setStyle(ButtonStyle.Primary)
+      );
+
+    const reply = await interaction.editReply({ 
+      content: '', 
+      embeds: [evalEmbed],
+      components: [buttons]
+    });
 
     // Create thread for the full report
     let threadId = null;
@@ -84,22 +115,10 @@ export async function execute(interaction) {
         await thread.send({ embeds: [chunkEmbed] });
       }
       threadId = thread.id;
+      updateApplicationThread(appId, threadId);
     } catch {
       // Thread creation might fail in some channel types — not critical
     }
-
-    // Save to tracker
-    saveApplication({
-      discordId,
-      company,
-      role,
-      score,
-      archetype,
-      legitimacy,
-      jdSnippet: jdText.slice(0, 500),
-      reportText: rawReport,
-      threadId,
-    });
 
     // Proactive DM for high scores
     const dmThreshold = parseFloat(process.env.DM_SCORE_THRESHOLD || '4.0');
@@ -118,11 +137,7 @@ export async function execute(interaction) {
   } catch (err) {
     log.error('[/evaluate] Error:', { error: err.message, discordId });
 
-    const errMsg = err.message?.includes('quota') || err.message?.includes('rate')
-      ? '⏳ Gemini rate limit hit — please wait 60 seconds and try again.'
-      : err.message?.includes('API_KEY')
-        ? '❌ Invalid Gemini API key — contact the server admin.'
-        : `❌ Evaluation failed: ${err.message?.slice(0, 200) || 'Unknown error'}`;
+    const errMsg = `❌ Evaluation failed:\n\n${err.stack?.slice(0, 500) || err.message || 'Unknown error'}`;
 
     await interaction.editReply({ content: '', embeds: [buildErrorEmbed(errMsg)] });
   }

@@ -10,13 +10,15 @@
  */
 
 import 'dotenv/config';
-import { Client, GatewayIntentBits, Collection, Events } from 'discord.js';
+import { Client, GatewayIntentBits, Collection, Events, Partials } from 'discord.js';
 import { readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { checkRateLimit, rateLimitMessage } from './lib/rate-limiter.js';
 import { startHealthServer, setReady } from './lib/health.js';
 import { startPipelineWorker } from './lib/pipeline.js';
+import { startScoutService } from './lib/scout.js';
+import { handleButton } from './lib/interaction-handler.js';
 import log from './lib/logger.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -56,6 +58,7 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
   ],
+  partials: [Partials.Channel],
 });
 
 // ── Load commands ─────────────────────────────────────────────────────────────
@@ -120,6 +123,10 @@ client.once(Events.ClientReady, (c) => {
 // ── Event: Interaction ────────────────────────────────────────────────────────
 
 client.on(Events.InteractionCreate, async (interaction) => {
+  if (interaction.isButton()) {
+    return handleButton(interaction);
+  }
+
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.commands.get(interaction.commandName);
@@ -202,6 +209,43 @@ client.on('shardReady', (shardId) => {
   setReady(true);
 });
 
+// ── Event: Natural Language Routing ───────────────────────────────────────────
+
+import { GoogleGenerativeAI } from '@google/generative-ai';
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot || !message.guild) return;
+  if (!message.content) return;
+
+  // Simple routing for common natural language triggers
+  const content = message.content.toLowerCase();
+  
+  if (content.includes('evaluate') || content.includes('check this') || content.match(/https?:\/\/[^\s]+/)) {
+    const urlMatch = message.content.match(/https?:\/\/[^\s]+/);
+    if (urlMatch) {
+      const url = urlMatch[0];
+      await message.reply(`🤖 **Natural Language Detected:** "I'll evaluate that job for you!"`);
+      const evaluateCommand = client.commands.get('evaluate');
+      // Create a mock interaction-like object for execute()
+      const mockInteraction = {
+        user: message.author,
+        options: { getString: () => url },
+        reply: (msg) => message.reply(msg),
+        deferReply: () => message.channel.sendTyping(),
+        editReply: (msg) => message.reply(msg),
+        followUp: (msg) => message.reply(msg),
+        guildId: message.guildId,
+      };
+      return evaluateCommand.execute(mockInteraction);
+    }
+  }
+
+  if (content === 'hello' || content === 'hi' || content === 'hey bot') {
+    return message.reply("👋 **Hey there!** I'm Wingman, your career assistant. You can talk to me normally, or use `/help` to see what I can do!");
+  }
+});
+
 // ── Graceful shutdown ─────────────────────────────────────────────────────────
 
 function shutdown(signal) {
@@ -221,5 +265,6 @@ process.on('SIGINT',  () => shutdown('SIGINT'));
 // ── Start ─────────────────────────────────────────────────────────────────────
 
 startHealthServer();
-startPipelineWorker();
+startPipelineWorker(client);
+startScoutService(client);
 client.login(process.env.DISCORD_TOKEN);

@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { callGemini } from '../lib/gemini.js';
 import { getCV } from '../lib/db.js';
 import { buildScanPrompt } from '../lib/prompt-engine.js';
@@ -37,21 +37,31 @@ export async function execute(interaction) {
       const jobs = await fetchAtsJobs(type, id);
       if (!jobs.length) return interaction.editReply(`❌ No jobs found on ${type} board: **${id}**`);
 
-      const embed = new EmbedBuilder()
-        .setTitle(`🏢 ${id.toUpperCase()} — Active Openings (${type})`)
+      const buttons = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId(`swipe_pass_0_${type}_${id}`)
+            .setLabel('⬅️ Pass')
+            .setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder()
+            .setCustomId(`swipe_apply_0_${type}_${id}`)
+            .setLabel('🚀 Apply')
+            .setStyle(ButtonStyle.Success),
+          new ButtonBuilder()
+            .setCustomId(`swipe_next_0_${type}_${id}`)
+            .setLabel('➡️ Next')
+            .setStyle(ButtonStyle.Primary)
+        );
+
+      const job = jobs[0];
+      const jobEmbed = new EmbedBuilder()
+        .setTitle(`${job.title} @ ${id.toUpperCase()}`)
         .setColor(0x5865F2)
-        .setDescription(`Found ${jobs.length} roles. Use \`/evaluate\` with the URL to analyze fit.`)
-        .setFooter({ text: 'Wingman Portal Scanner' });
+        .setDescription(`📍 ${job.location}\n\n**Match Score:** Analyzing...\nUse the buttons below to "Swipe" through roles.`)
+        .addFields({ name: 'Role Index', value: `1 of ${jobs.length}`, inline: true })
+        .setFooter({ text: 'Wingman Match Feed' });
 
-      for (const job of jobs.slice(0, 8)) {
-        embed.addFields({
-          name: job.title,
-          value: `📍 ${job.location}\n🔗 [View Role](${job.url})`,
-          inline: true
-        });
-      }
-
-      await interaction.editReply({ embeds: [embed] });
+      await interaction.editReply({ embeds: [jobEmbed], components: [buttons] });
     } catch (err) {
       log.error('[/scan portal] Error:', { error: err.message, discordId });
       await interaction.editReply(`❌ Portal scan failed: ${err.message}`);
