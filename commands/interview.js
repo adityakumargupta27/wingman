@@ -10,6 +10,7 @@ import { upsertUser, getCV } from '../lib/db.js';
 import { generateInterviewQuestions } from '../lib/gemini.js';
 import { buildInterviewPrepPrompt } from '../lib/prompt-engine.js';
 import { buildErrorEmbed } from '../lib/embed-builder.js';
+import log from '../lib/logger.js';
 
 export const data = new SlashCommandBuilder()
   .setName('interview')
@@ -38,12 +39,12 @@ export async function execute(interaction) {
       .setColor(0x57F287)
       .setTitle(`🎤 Interview Prep — ${role}`)
       .setDescription(questions.slice(0, 4000))
-      .setFooter({ text: 'SME Bot · Study these, then practice out loud!' });
+      .setFooter({ text: 'Wingman · Study these, then practice out loud!' });
 
     await interaction.editReply({ embeds: [embed] });
 
   } catch (err) {
-    console.error('[/interview] Error:', err);
+    log.error('[/interview] Error:', { error: err.message, discordId });
     await interaction.editReply({
       embeds: [buildErrorEmbed(`Interview prep failed: ${err.message?.slice(0, 200) || 'Unknown error'}`)],
     });

@@ -5,3 +5,5 @@ data/
 *.db-journal
 *.db-shm
 *.db-wal
+data/
+output/

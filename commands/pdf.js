@@ -1,6 +1,9 @@
 import { SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
 import { generatePDF } from '../lib/pdfGenerator.js';
 import { getCV } from '../lib/db.js';
+import { callGemini } from '../lib/gemini.js';
+import { buildTailorPrompt } from '../lib/prompt-engine.js';
+import log from '../lib/logger.js';
 
 export const data = new SlashCommandBuilder()
   .setName('pdf')
@@ -13,6 +16,11 @@ export const data = new SlashCommandBuilder()
   .addStringOption(opt =>
     opt.setName('role')
       .setDescription('Target role (optional)')
+      .setRequired(false)
+  )
+  .addStringOption(opt =>
+    opt.setName('jd')
+      .setDescription('Paste job description for deep tailoring (optional)')
       .setRequired(false)
   );
 
@@ -28,17 +36,23 @@ export async function execute(interaction) {
 
     const company = interaction.options.getString('company') || 'Company';
     const role = interaction.options.getString('role') || 'Role';
+    const jd = interaction.options.getString('jd');
 
-    await interaction.editReply(`📄 **Generating tailored ATS resume...**\nTarget: ${role} @ ${company}`);
+    await interaction.editReply(`📄 **Tailoring your resume for ${role} @ ${company}...**`);
 
-    const evaluationContext = {
-      role: role,
-      company: company,
-      cv_matches: ['Firebase', 'AI Integration', 'React'], // Dummy
-      cover_letter_hook: ''
-    };
+    const systemPrompt = buildTailorPrompt({ cvText, role, company, jd });
+    const rawResponse = await callGemini(systemPrompt, `Tailoring resume for ${role} at ${company}`);
 
-    const pdfInfo = await generatePDF(evaluationContext, cvText);
+    let resumeData;
+    try {
+      const match = rawResponse.match(/\{[\s\S]*\}/);
+      resumeData = JSON.parse(match[0]);
+    } catch {
+      log.error('[/pdf] JSON parse failed', { rawResponse, discordId });
+      throw new Error('Failed to parse AI response. Please try again.');
+    }
+
+    const pdfInfo = await generatePDF(resumeData);
     const attachment = new AttachmentBuilder(pdfInfo.path, { name: pdfInfo.filename });
 
     await interaction.editReply({
@@ -46,7 +60,7 @@ export async function execute(interaction) {
       files: [attachment]
     });
   } catch (err) {
-    console.error('[/pdf] Error:', err);
+    log.error('[/pdf] Error:', { error: err.message, discordId });
     await interaction.editReply(`❌ PDF generation failed: ${err.message}`);
   }
 }

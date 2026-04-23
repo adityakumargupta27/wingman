@@ -61,7 +61,7 @@ export async function execute(interaction) {
       const thread = await reply.startThread({
         name: `📋 ${company} — ${role}`.slice(0, 100),
         autoArchiveDuration: 1440,
-        reason: 'SME Bot evaluation report',
+        reason: 'Wingman evaluation report',
       });
       const chunks = splitReport(rawReport);
       for (let i = 0; i < chunks.length; i++) {

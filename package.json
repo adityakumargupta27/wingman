@@ -20,6 +20,11 @@
     "node": ">=18.0.0"
   },
   "keywords": ["discord-bot", "career-intelligence", "gemini-api", "job-search"],
-  "author": "Aditya @ BMSCE",
-  "license": "MIT"
+  "author": "Aditya Kumar Gupta",
+  "license": "MIT",
+  "homepage": "https://github.com/adityakumargupta27/wingman",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adityakumargupta27/wingman.git"
+  }
 }

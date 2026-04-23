@@ -44,7 +44,7 @@ wingman/
 
 1. Clone the repository and install dependencies:
 ```bash
-git clone https://github.com/adity/wingman.git
+git clone https://github.com/adityakumargupta27/wingman.git
 cd wingman
 npm install
 ```
@@ -76,7 +76,7 @@ npm start
 Wingman is ready to deploy to platforms like Railway or Fly.io.
 
 **Using Docker (Fly.io / Render):**
-A `Dockerfile` is included. It uses the `mcr.microsoft.com/playwright:v1.42.1-jammy` base image to ensure Playwright browser binaries are available.
+A `Dockerfile` is included. It uses the `mcr.microsoft.com/playwright:v1.42.1-jammy` base image to ensure Playwright browser binaries are available. Note: Slash commands should be registered manually via `npm run deploy` before/during deployment.
 
 **Using PM2 (VPS):**
 ```bash
@@ -91,10 +91,10 @@ pm2 start pm2.config.js
 | Command | Description |
 |---|---|
 | `/evaluate [url or jd]` | Evaluate a job against your CV (returns A-F score & thread report) |
-| `/scan [keyword]` | Scan portals for matching job opportunities |
-| `/pdf [company] [role]` | Generate an ATS-optimized tailored resume |
-| `/interview [role]` | Generate tailored interview questions |
-| `/negotiate` | View salary negotiation scripts & market data |
+| `/scan [keyword]` | Scan portals for matching job opportunities (AI-powered) |
+| `/pdf [company] [role] [jd]` | Generate an ATS-optimized resume tailored to a specific job |
+| `/interview [role]` | Generate tailored interview questions based on your CV |
+| `/negotiate [company] [role]` | Get a tailored salary negotiation script |
 | `/tracker view` | View your application pipeline |
 | `/tracker update [id] [status]`| Update application status |
 | `/cv set` | Upload your CV (.txt file) |

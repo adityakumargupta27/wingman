@@ -1,4 +1,4 @@
-# SME Bot — Company Deep Research Mode
+# Wingman — Company Deep Research Mode
 
 ## Your Task
 Research the given company thoroughly for a job seeker considering applying there.

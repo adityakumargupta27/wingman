@@ -9,6 +9,7 @@ import { upsertUser } from '../lib/db.js';
 import { researchCompany } from '../lib/gemini.js';
 import { buildDeepResearchPrompt } from '../lib/prompt-engine.js';
 import { buildErrorEmbed } from '../lib/embed-builder.js';
+import log from '../lib/logger.js';
 
 export const data = new SlashCommandBuilder()
   .setName('deep')
@@ -36,13 +37,13 @@ export async function execute(interaction) {
       .setColor(0x5865F2)
       .setTitle(`🔬 Deep Research — ${companyName}`)
       .setDescription(report.slice(0, 4000))
-      .setFooter({ text: 'SME Bot · powered by Google Gemini' })
+      .setFooter({ text: 'Wingman · powered by Google Gemini' })
       .setTimestamp();
 
     await interaction.editReply({ embeds: [embed] });
 
   } catch (err) {
-    console.error('[/deep] Error:', err);
+    log.error('[/deep] Error:', { error: err.message, discordId });
     await interaction.editReply({
       embeds: [buildErrorEmbed(`Research failed: ${err.message?.slice(0, 200) || 'Unknown error'}`)],
     });

@@ -13,6 +13,7 @@ import { buildEvaluationPrompt } from '../lib/prompt-engine.js';
 import { parseScore } from '../lib/score-parser.js';
 import { buildEvalEmbed, buildReportChunk, splitReport, buildErrorEmbed } from '../lib/embed-builder.js';
 import { fetchJobDescription } from '../lib/scraper.js';
+import log from '../lib/logger.js';
 
 export const data = new SlashCommandBuilder()
   .setName('evaluate')
@@ -115,7 +116,7 @@ export async function execute(interaction) {
     }
 
   } catch (err) {
-    console.error('[/evaluate] Error:', err);
+    log.error('[/evaluate] Error:', { error: err.message, discordId });
 
     const errMsg = err.message?.includes('quota') || err.message?.includes('rate')
       ? '⏳ Gemini rate limit hit — please wait 60 seconds and try again.'

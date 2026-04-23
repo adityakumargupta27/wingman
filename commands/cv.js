@@ -28,7 +28,7 @@ export const data = new SlashCommandBuilder()
   )
   .addSubcommand(sub =>
     sub.setName('delete')
-      .setDescription('Remove your CV from SME Bot'),
+      .setDescription('Remove your CV from Wingman'),
   );
 
 export async function execute(interaction) {

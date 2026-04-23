@@ -10,9 +10,6 @@ RUN npm ci --only=production
 # Bundle app source
 COPY . .
 
-# Run the deploy script to register slash commands
-RUN node deploy-commands.js || true
-
 # Start PM2
 RUN npm install pm2 -g
 CMD ["pm2-runtime", "pm2.config.js"]
