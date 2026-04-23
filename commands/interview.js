@@ -6,7 +6,7 @@
  */
 
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { upsertUser, getCV } from '../lib/db.js';
+import { upsertUser, getCV, getStories } from '../lib/db.js';
 import { generateInterviewQuestions } from '../lib/gemini.js';
 import { buildInterviewPrepPrompt } from '../lib/prompt-engine.js';
 import { buildErrorEmbed } from '../lib/embed-builder.js';
@@ -32,7 +32,8 @@ export async function execute(interaction) {
 
   try {
     const cvText       = getCV(discordId);
-    const systemPrompt = buildInterviewPrepPrompt(cvText);
+    const stories      = getStories(discordId);
+    const systemPrompt = buildInterviewPrepPrompt(cvText, stories);
     const questions    = await generateInterviewQuestions({ systemPrompt, role });
 
     const embed = new EmbedBuilder()
