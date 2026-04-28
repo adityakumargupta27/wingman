@@ -24,7 +24,7 @@ COPY . .
 RUN mkdir -p /usr/src/app/data
 
 # Health check for container orchestrators
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
 
 # Start with PM2 runtime (auto-restart, log management)

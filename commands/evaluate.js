@@ -1,9 +1,15 @@
 /**
  * commands/evaluate.js — /evaluate command
  *
- * Evaluates a job description against the user's saved CV.
- * Accepts either a pasted text JD or a URL (which it scrapes using Playwright).
- * Creates a thread for the full report, sends a summary embed inline.
+ * AGENT: Elite Recruiter Evaluator
+ * INPUT: Job URL or pasted JD text + user's CV
+ * OUTPUT: 10-dimension fit score, gaps, strengths, recommendation
+ *
+ * Uses dedicated buildEvaluationPrompt() as system persona.
+ * JD text goes as USER content via evaluateJD().
+ *
+ * SCRAPER SAFETY: If scraping fails, user gets a clean error message.
+ * Playwright errors are NEVER passed to the LLM.
  */
 
 import { SlashCommandBuilder, ThreadAutoArchiveDuration, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
@@ -12,12 +18,12 @@ import { evaluateJD } from '../lib/gemini.js';
 import { buildEvaluationPrompt } from '../lib/prompt-engine.js';
 import { parseScore } from '../lib/score-parser.js';
 import { buildEvalEmbed, buildReportChunk, splitReport, buildErrorEmbed } from '../lib/embed-builder.js';
-import { fetchJobDescription } from '../lib/scraper.js';
+import { fetchJobDescription, ScraperError } from '../lib/scraper.js';
 import log from '../lib/logger.js';
 
 export const data = new SlashCommandBuilder()
   .setName('evaluate')
-  .setDescription('Evaluate a job description against your CV')
+  .setDescription('🎯 Evaluate a job description against your CV')
   .addStringOption(opt =>
     opt.setName('url')
       .setDescription('URL of the job posting')
@@ -40,52 +46,45 @@ export async function execute(interaction) {
     return interaction.reply({ content: '❌ You must provide either a `url` or `jd` text to evaluate.', ephemeral: true });
   }
 
-  // Ensure user row exists
   upsertUser(discordId, username);
-
-  // Defer reply — scraping + Gemini can take 30-60s
   await interaction.deferReply();
 
   try {
-    if (url) {
+    // Step 1: Get JD text (scrape if URL provided)
+    if (url && !jdText) {
       await interaction.editReply(`🔍 **Scraping job description...**\nURL: <${url}>`);
+      // fetchJobDescription throws ScraperError with clean messages on failure
       const fetched = await fetchJobDescription(url);
-      if (fetched.text.startsWith('Could not fetch page')) {
-         return interaction.editReply({ embeds: [buildErrorEmbed(fetched.text)] });
-      }
       jdText = fetched.text;
       await interaction.editReply(`✅ **Job description scraped!** Now evaluating against your CV...`);
     }
 
+    // Step 2: Build FRESH evaluation context
     const cvText       = await getCV(discordId);
     const systemPrompt = buildEvaluationPrompt(cvText);
     const rawResponse  = await evaluateJD({ systemPrompt, jdText });
+
+    // Step 3: Parse structured output
     const { company, role, score, archetype, legitimacy, stories, rawReport } = parseScore(rawResponse);
 
-    // Save to tracker
+    // Step 4: Save to tracker
     const appId = saveApplication({
       discordId,
-      company,
-      role,
-      score,
-      archetype,
-      legitimacy,
+      company, role, score, archetype, legitimacy,
       jdSnippet: jdText.slice(0, 500),
       reportText: rawReport,
       storiesJson: stories,
     });
 
-    // Send summary embed with buttons
+    // Step 5: Build premium embed
     const evalEmbed = buildEvalEmbed({ company, role, score, archetype, legitimacy });
-    if (url) {
-        evalEmbed.setURL(url);
-    }
+    if (url) evalEmbed.setURL(url);
 
     const buttons = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
           .setCustomId(`save_story_${appId}`)
-          .setLabel('📥 Save Stories to Bank')
+          .setLabel('📥 Save Stories')
           .setStyle(ButtonStyle.Success)
           .setDisabled(!stories || stories === 'null'),
         new ButtonBuilder()
@@ -94,14 +93,13 @@ export async function execute(interaction) {
           .setStyle(ButtonStyle.Primary)
       );
 
-    const reply = await interaction.editReply({ 
-      content: '', 
+    const reply = await interaction.editReply({
+      content: '',
       embeds: [evalEmbed],
       components: [buttons]
     });
 
-    // Create thread for the full report
-    let threadId = null;
+    // Step 6: Create thread for full report
     try {
       const thread = await reply.startThread({
         name: `📋 ${company} — ${role}`.slice(0, 100),
@@ -114,31 +112,33 @@ export async function execute(interaction) {
         const chunkEmbed = buildReportChunk(chunks[i], i + 1, chunks.length);
         await thread.send({ embeds: [chunkEmbed] });
       }
-      threadId = thread.id;
-      updateApplicationThread(appId, threadId);
+      updateApplicationThread(appId, thread.id);
     } catch {
       // Thread creation might fail in some channel types — not critical
     }
 
-    // Proactive DM for high scores
-    const dmThreshold = parseFloat(process.env.DM_SCORE_THRESHOLD || '4.0');
+    // Step 7: Proactive DM for high scores
+    const dmThreshold = parseFloat(process.env.DM_SCORE_THRESHOLD || '7.0');
     if (score !== null && score >= dmThreshold) {
       try {
         const user = await interaction.client.users.fetch(discordId);
         await user.send({
-          content: `🌟 **Strong match found!** Your evaluation for **${company} — ${role}** scored **${score.toFixed(1)}/5.0**.`,
+          content: `🌟 **Strong match found!** Your evaluation for **${company} — ${role}** scored **${score.toFixed(1)}/10.0**.`,
           embeds: [evalEmbed],
         });
       } catch {
-        // DMs may be disabled — silently ignore
+        // DMs may be disabled
       }
     }
 
   } catch (err) {
-    log.error('[/evaluate] Error:', { error: err.message, discordId });
+    log.error('[/evaluate] Error', { error: err.message, discordId });
 
-    const errMsg = `❌ Evaluation failed:\n\n${err.stack?.slice(0, 500) || err.message || 'Unknown error'}`;
+    // ScraperError messages are already user-facing and clean
+    const userMsg = err instanceof ScraperError
+      ? err.message
+      : `❌ Evaluation failed:\n\n${err.message?.slice(0, 300) || 'Unknown error'}`;
 
-    await interaction.editReply({ content: '', embeds: [buildErrorEmbed(errMsg)] });
+    await interaction.editReply({ content: '', embeds: [buildErrorEmbed(userMsg)] });
   }
 }
