@@ -1,0 +1,29 @@
+services:
+  - type: worker
+    name: wingman-bot
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm ci --only=production
+    startCommand: node index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HEADLESS
+        value: "true"
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.0-flash
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: DB_PATH
+        value: ./data/wingman.db
+      - key: DM_SCORE_THRESHOLD
+        value: "4.0"
+      - key: PORT
+        value: "8080"
