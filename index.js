@@ -20,6 +20,7 @@ import { checkRateLimit, rateLimitMessage } from './lib/rate-limiter.js';
 import { startHealthServer, setReady } from './lib/health.js';
 import { startPipelineWorker } from './lib/pipeline.js';
 import { startScoutService } from './lib/scout.js';
+import { startJobScheduler } from './lib/job-scheduler.js';
 import { handleButton } from './lib/interaction-handler.js';
 import { startTelegramBot } from './lib/telegram.js';
 import log from './lib/logger.js';
@@ -260,5 +261,6 @@ if (missingDiscord.length) {
 
   startPipelineWorker(client);
   startScoutService(client);
+  startJobScheduler();
   client.login(process.env.DISCORD_TOKEN);
 }
