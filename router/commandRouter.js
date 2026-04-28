@@ -20,34 +20,34 @@ export async function routeCommand(ctx) {
         setUserState(userId, "project_mode");
         return handlers.send(chatId, "📎 OK, send me the **GitHub URL** or **Project Description** you want to analyze.", { parse_mode: 'Markdown' });
       }
-      return handlers.handleProject(chatId, arg);
+      return handlers.handleProject(chatId, arg, handlers);
 
     case "/deep":
     case "/research":
       if (!arg) {
         return handlers.send(chatId, "🕵️ Usage: `/deep Company Name`", { parse_mode: 'Markdown' });
       }
-      return handlers.handleDeep(chatId, arg);
+      return handlers.handleDeep(chatId, arg, handlers);
 
     case "/tailor":
       if (!arg) {
         setUserState(userId, "tailor_mode");
         return handlers.send(chatId, "✂️ OK, send me the **Job URL** or **JD Text** you want to tailor your resume for.", { parse_mode: 'Markdown' });
       }
-      return handlers.handleTailor(chatId, userId, arg);
+      return handlers.handleTailor(chatId, userId, arg, handlers);
 
     case "/jobs":
-      return handlers.handleJobs(chatId, userId, arg);
+      return handlers.handleJobs(chatId, userId, arg, handlers);
 
     case "/tracker":
-      return handlers.handleTracker(chatId, userId);
+      return handlers.handleTracker(chatId, userId, handlers);
 
     case "/evaluate":
     case "/eval":
       if (!arg) {
         return handlers.send(chatId, "🎯 Usage: `/evaluate Job URL`", { parse_mode: 'Markdown' });
       }
-      return handlers.handleEvaluate(chatId, userId, arg);
+      return handlers.handleEvaluate(chatId, userId, arg, handlers);
 
     case "/cancel":
       clearUserState(userId);
