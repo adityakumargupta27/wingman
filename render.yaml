@@ -4,7 +4,9 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     region: oregon
-    plan: free
+    plan: starter  # $7/mo — keeps the bot alive 24/7 (free plan sleeps)
+    autoDeploy: true
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
@@ -18,6 +20,7 @@ services:
         value: "4.0"
       - key: PORT
         value: "8080"
+      # ── Secrets (set in Render dashboard, NOT in yaml) ──
       - key: DISCORD_TOKEN
         sync: false
       - key: DISCORD_CLIENT_ID
@@ -25,4 +28,8 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: TELEGRAM_TOKEN
+        sync: false
+      - key: GMAIL_CLIENT_ID
+        sync: false
+      - key: GMAIL_CLIENT_SECRET
         sync: false
