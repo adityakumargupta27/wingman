@@ -26,7 +26,7 @@ const ROOT = dirname(fileURLToPath(import.meta.url));
 
 // ── Validate required env vars ────────────────────────────────────────────────
 
-const REQUIRED_ENV = ['DISCORD_TOKEN', 'DISCORD_CLIENT_ID', 'GEMINI_API_KEY'];
+const REQUIRED_ENV = ['DISCORD_TOKEN', 'DISCORD_CLIENT_ID', 'OPENAI_API_KEY'];
 const missing = REQUIRED_ENV.filter(k => !process.env[k]);
 if (missing.length) {
   console.error(`❌  Missing required environment variables: ${missing.join(', ')}`);
@@ -212,8 +212,9 @@ client.on('shardReady', (shardId) => {
 
 // ── Event: Natural Language Routing ───────────────────────────────────────────
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+if (!process.env.OPENAI_API_KEY) {
+  log.warn('⚠️  OPENAI_API_KEY is not set. AI features will be disabled.');
+}
 
 client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot || !message.guild) return;

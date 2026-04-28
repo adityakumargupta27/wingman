@@ -16,6 +16,7 @@
     "dotenv": "^16.4.5",
     "googleapis": "^171.4.0",
     "node-telegram-bot-api": "^0.67.0",
+    "openai": "^6.34.0",
     "pdf-parse": "^1.1.1",
     "playwright": "^1.42.1",
     "sql.js": "^1.12.0"
