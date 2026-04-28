@@ -19,6 +19,7 @@ import { startHealthServer, setReady } from './lib/health.js';
 import { startPipelineWorker } from './lib/pipeline.js';
 import { startScoutService } from './lib/scout.js';
 import { handleButton } from './lib/interaction-handler.js';
+import { startTelegramBot } from './lib/telegram.js';
 import log from './lib/logger.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -267,4 +268,5 @@ process.on('SIGINT',  () => shutdown('SIGINT'));
 startHealthServer();
 startPipelineWorker(client);
 startScoutService(client);
+startTelegramBot();
 client.login(process.env.DISCORD_TOKEN);

@@ -10,7 +10,7 @@ import { upsertUser, setCV, getCV, deleteCV } from '../lib/db.js';
 import { buildSuccessEmbed, buildErrorEmbed } from '../lib/embed-builder.js';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const pdf = require('pdf-parse');
+const pdf = require('pdf-parse/lib/pdf-parse.js');
 import axios from 'axios';
 
 export const data = new SlashCommandBuilder()
