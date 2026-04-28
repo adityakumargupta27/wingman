@@ -12,14 +12,16 @@ Respond EXACTLY in this Markdown format:
 
 🧬 **Project DNA Analysis**
 
+⭐ **Complexity Rating**: (0.0 - 10.0) based on architecture, tech depth, and polish.
+
 🔍 **Hidden Skills Found**
 *List 5-8 specific technical and architectural skills they used (e.g., Auth Flows, DB Schema Design, State Management, Prompt Engineering).*
 
-💼 **Roles You Qualify For**
-*List 3-4 specific roles (direct and adjacent) they are actually qualified for based on this project (e.g., Product Engineer, Backend Intern).*
+💼 **Optimal Job Positions**
+*List 3-4 specific roles where this project is a "Killer Proof of Work".*
 
-💰 **Estimated Salary Range / Market Value**
-*Provide a realistic salary range for those roles.*
+🔗 **Current Openings & Market Context**
+*Suggest 2-3 types of companies or specific current hiring trends where this project would fill a critical gap.*
 
 📈 **Missing Skills to Level Up**
 *What 2-3 technologies should they add to this project to unlock the NEXT tier of jobs?*

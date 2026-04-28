@@ -1,33 +1,36 @@
 services:
-  - type: worker
+  - type: web
     name: wingman-bot
     runtime: docker
     dockerfilePath: ./Dockerfile
     region: oregon
-    plan: starter  # $7/mo — keeps the bot alive 24/7 (free plan sleeps)
+    plan: starter
     autoDeploy: true
     healthCheckPath: /health
+    disk:
+      name: wingman-data
+      mountPath: /usr/src/app/data
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
       - key: HEADLESS
         value: "true"
-      - key: GEMINI_MODEL
-        value: gemini-2.5-flash-preview-04-17
+      - key: AI_MODEL
+        value: openai/gpt-4o-mini
+      - key: OPENAI_BASE_URL
+        value: https://openrouter.ai/api/v1
       - key: DB_PATH
-        value: ./data/wingman.db
-      - key: DM_SCORE_THRESHOLD
-        value: "4.0"
+        value: /usr/src/app/data/wingman.db
       - key: PORT
         value: "8080"
-      # ── Secrets (set in Render dashboard, NOT in yaml) ──
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
       - key: DISCORD_TOKEN
         sync: false
       - key: DISCORD_CLIENT_ID
-        sync: false
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: TELEGRAM_TOKEN
         sync: false
       - key: GMAIL_CLIENT_ID
         sync: false
