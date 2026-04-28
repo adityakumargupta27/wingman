@@ -57,16 +57,8 @@ export async function execute(interaction) {
         const systemPrompt = buildTailorPrompt({ cvText, role, company, jd });
         rawResponse = await callGemini(systemPrompt, `Tailoring resume for ${role} at ${company}`);
       } catch (err) {
-        log.warn('AI Tailoring failed, using mock data for demo', { error: err.message });
-        rawResponse = JSON.stringify({
-          name: interaction.user.username,
-          contact: { email: "aditya@example.com", phone: "555-0199", location: "Global" },
-          summary: `Professional ${role} candidate focused on high-impact projects. Built using Wingman AI.`,
-          experience: [
-            { company: "Wingman AI Studio", role: role, period: "2024", highlights: ["Automated career intelligence pipelines", "Integrated real-world APIs"] }
-          ],
-          skills: ["System Architecture", "Agentic Workflows", "Problem Solving"]
-        });
+        log.error('AI Tailoring failed', { error: err.message });
+        throw new Error(`AI Tailoring failed: ${err.message}. Please try again later.`);
       }
     }
 

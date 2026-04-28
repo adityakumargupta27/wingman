@@ -17,7 +17,7 @@ Score each dimension from 0-10 based on CV vs JD:
 9.  **Timing**: Urgency and availability.
 10. **Growth**: Future trajectory within the company.
 
-**GLOBAL SCORE:** (Average of above / 2) -> Result out of 5.0.
+**GLOBAL SCORE:** (Average of above) -> Result out of 10.0.
 
 ## ════════════════════════════════════════════════════
 ## BLOCK B: ROLE SUMMARY & ARCHETYPE
