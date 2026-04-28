@@ -59,7 +59,8 @@ process.on('unhandledRejection', (reason) => {
 // Telegram only needs TELEGRAM_TOKEN. It starts regardless of Discord status.
 // ══════════════════════════════════════════════════════════════════════════════
 
-startTelegramBot();
+import { handlers as tgHandlers } from './lib/telegram-handlers.js';
+startTelegramBot(tgHandlers);
 
 // ══════════════════════════════════════════════════════════════════════════════
 // STEP 4: Validate Discord env vars (non-fatal)
