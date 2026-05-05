@@ -12,7 +12,7 @@ export async function routeCommand(ctx) {
   switch (cmd.toLowerCase()) {
     case "/start":
     case "/help":
-      return handlers.handleHelp(chatId);
+      return handlers.handleHelp(chatId, handlers);
 
     case "/project":
     case "/proj":
