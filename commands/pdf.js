@@ -5,9 +5,11 @@ import { callGemini } from '../lib/gemini.js';
 import { buildTailorPrompt } from '../lib/prompt-engine.js';
 import log from '../lib/logger.js';
 
+import { generateResumeWord } from '../utils/wordBuilder.js';
+
 export const data = new SlashCommandBuilder()
   .setName('pdf')
-  .setDescription('📄 Generate ATS-optimized resume PDF (with optional job tailoring)')
+  .setDescription('📄 Generate ATS-optimized resume (with optional job tailoring and format)')
   .addStringOption(opt =>
     opt.setName('company')
       .setDescription('Target company name (optional)')
@@ -21,6 +23,15 @@ export const data = new SlashCommandBuilder()
   .addStringOption(opt =>
     opt.setName('jd')
       .setDescription('Paste job description for deep tailoring (optional)')
+      .setRequired(false)
+  )
+  .addStringOption(opt =>
+    opt.setName('format')
+      .setDescription('Output format (pdf or word)')
+      .addChoices(
+        { name: 'PDF', value: 'pdf' },
+        { name: 'Word (DOCX)', value: 'word' }
+      )
       .setRequired(false)
   );
 
@@ -37,6 +48,7 @@ export async function execute(interaction) {
     const company = interaction.options.getString('company') || 'Company';
     const role = interaction.options.getString('role') || 'Role';
     const jd = interaction.options.getString('jd');
+    const format = interaction.options.getString('format') || 'pdf';
 
     await interaction.editReply(`📄 **Tailoring your resume for ${role} @ ${company}...**`);
 
@@ -54,25 +66,34 @@ export async function execute(interaction) {
       });
     } else {
       try {
-        const systemPrompt = buildTailorPrompt({ cvText, role, company, jd });
-        rawResponse = await callGemini(systemPrompt, `Tailoring resume for ${role} at ${company}`);
+        const systemPrompt = buildTailorPrompt({ role, company, jd });
+        rawResponse = await callGemini(systemPrompt, `ORIGINAL RESUME:\n\n${cvText}`);
       } catch (err) {
         log.error('AI Tailoring failed', { error: err.message });
         throw new Error(`AI Tailoring failed: ${err.message}. Please try again later.`);
       }
     }
 
-    let resumeData;
-    try {
-      const match = rawResponse.match(/\{[\s\S]*\}/);
-      resumeData = JSON.parse(match[0]);
-    } catch {
-      log.error('[/pdf] JSON parse failed', { rawResponse, discordId });
-      throw new Error('Failed to parse response. Please check your AI key.');
-    }
+    let attachment;
+    
+    if (format === 'word') {
+      const wordBuffer = await generateResumeWord(rawResponse);
+      const safeRole = role.replace(/[^a-zA-Z0-9]/g, '-');
+      const safeCompany = company.replace(/[^a-zA-Z0-9]/g, '-');
+      attachment = new AttachmentBuilder(wordBuffer, { name: `Wingman_Resume_${safeCompany}_${safeRole}.docx` });
+    } else {
+      let resumeData;
+      try {
+        const match = rawResponse.match(/\{[\s\S]*\}/);
+        resumeData = JSON.parse(match[0]);
+      } catch {
+        log.error('[/pdf] JSON parse failed', { rawResponse, discordId });
+        throw new Error('Failed to parse response. Please check your AI key.');
+      }
 
-    const pdfInfo = await generatePDF(resumeData);
-    const attachment = new AttachmentBuilder(pdfInfo.path, { name: pdfInfo.filename });
+      const pdfInfo = await generatePDF(resumeData);
+      attachment = new AttachmentBuilder(pdfInfo.path, { name: pdfInfo.filename });
+    }
 
     await interaction.editReply({
       content: `✅ **Resume Ready!** — Tailored for ${role} @ ${company}`,
