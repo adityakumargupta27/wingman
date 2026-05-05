@@ -1,106 +1,217 @@
-# 🚀 Wingman
+# 🚀 Wingman AI: The Ultimate Career Intelligence Engine
 
-> **A Discord-native career intelligence platform powered by Gemini and Playwright.**
+> **A Telegram-native career intelligence ecosystem powered by OpenAI/Claude and Playwright.**
 
-Wingman automates and optimizes the job hunting pipeline directly inside Discord. It evaluates job descriptions against your resume, generates heavily tailored ATS-friendly PDFs on-the-fly, and provides an AI wingman for interview prep and salary negotiation.
-
----
-
-## ✨ Features
-
-- **🎯 Real-Time Evaluation Pipeline:** Just drop a job link or paste a JD in Discord. Wingman evaluates the role across 7 dimensions (cv match, role fit, culture, compensation, red flags) and gives you an instant A-F score.
-- **📄 Dynamic PDF Generation:** Uses Playwright to generate an ATS-optimized PDF resume uniquely tailored to the specific Job Description.
-- **🔍 Multi-Portal Scanning:** Scan for high-quality, relevant internship and full-time opportunities using AI.
-- **🎤 Interview Prep:** Generate 10 tailored interview questions (behavioral, technical, culture fit) based on your exact CV gaps and the target role.
-- **💰 Salary Negotiation Intelligence:** Get access to salary negotiation scripts and market data directly when you get an offer.
-- **📊 SQLite Application Tracker:** All evaluated jobs are automatically logged. Track your entire application pipeline (Evaluated → Applied → Interview → Offer).
-- **🛡️ Cloudflare Evasion:** Built-in Playwright scraper with window positioning tricks to securely scrape modern ATS portals like Workday, Lever, and Greenhouse.
+Wingman AI isn't just a bot; it's a fundamental shift in how human talent intersects with corporate requirements. It automates the "Black Hole" of job hunting by using advanced Large Language Models (LLMs) to understand engineering DNA and automate discovery.
 
 ---
 
-## 🛠️ Architecture
+## ✨ Core Features
 
-Wingman uses a prompt-driven evaluation pipeline where **modes** (`modes/*.md`) act as pluggable configuration for the AI logic.
+- **🎯 WMDR Matching Engine:** Evaluate jobs across 7 weighted dimensions (Skills, Experience, Location, Freshness, etc.) to get an instant Fit Score.
+- **📄 SCM Resume Tailoring:** Generates heavily tailored, ATS-friendly resumes in **PDF** or **Word** format by semantically mapping your project DNA to the JD.
+- **🔍 Autonomous Scout Service:** A background agent that scrapes 100+ company boards (Greenhouse, Lever, LinkedIn) every 6 hours and notifies you of high-score matches.
+- **🇮🇳 Indian Unicorn Focus:** Specialized support for top Indian tech hubs (Bangalore, Hyderabad, etc.) and unicorns like Swiggy, Zomato, Razorpay, and Cred.
+- **🛡️ Anti-Bot Scraper:** Built-in Playwright scraper with residential proxy support to securely bypass modern anti-bot measures on LinkedIn and Internshala.
 
-```text
-wingman/
-├── commands/         # Discord slash commands (/evaluate, /pdf, /scan, etc.)
-├── lib/              # Core logic (gemini API, SQLite DB, Playwright scraper)
-├── modes/            # Pluggable prompt engine logic
-├── index.js          # Entry point & command router
-└── data/             # Persistent user state and tracker (SQLite)
+---
+
+## 📐 High-Level Architecture
+
+Wingman uses a modular, event-driven architecture designed for high throughput and semantic precision.
+
+```mermaid
+graph TD
+    subgraph "External Sources"
+        L[LinkedIn]
+        G[Greenhouse]
+        LV[Lever]
+        I[Internshala]
+    end
+
+    subgraph "Wingman Core"
+        S[Scraper Engine]
+        DB[(SQLite DB)]
+        JE[Job Engine / WMDR]
+        TE[Tailoring Engine / SCM]
+    end
+
+    subgraph "Interfaces"
+        TB[Telegram Bot]
+        WD[Web Dashboard]
+    end
+
+    L & G & LV & I --> S
+    S --> DB
+    DB <--> JE
+    JE <--> TB
+    TB <--> TE
+    TE <--> WD
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🔄 End-to-End Workflow
+
+```mermaid
+graph TD
+    U[User] -->|Upload CV| TB[Telegram Bot]
+    TB -->|CV Text| DNA[AI: Project DNA Extraction]
+    DNA -->|Structured Profile| PDB[(Candidate DB)]
+
+    SCH[Scheduler: 6h] -->|Trigger| ING[Ingestion Engine]
+    ING -->|Scrape| ATS[Greenhouse / Lever / LinkedIn]
+    ATS -->|Raw Data| NORM[Normalizer & Filter]
+    NORM -->|Clean Job| JDB[(Job DB)]
+
+    JDB & PDB -->|WMDR Algorithm| MAT[Matcher Engine]
+    MAT -->|Score > 85%| NOT[Push Notification]
+    NOT -->|View Jobs| TB
+
+    TB -->|Select /tailor| TAI[AI: Semantic Tailoring]
+    TAI -->|SCM Algorithm| GEN[Document Generator]
+    GEN -->|PDF / Word| U
+```
+
+---
+
+## 🛠️ The Algorithms (The "Secret Sauce")
+
+### 1. WMDR (Weighted Multi-Dimensional Ranking)
+The matching engine weighs 7 dimensions to predict success:
+*   **30% Skill Match:** Fuzzy logic tech stack overlap.
+*   **20% Experience Match:** Seniority/Gap analysis.
+*   **10% Growth Upside:** Identifying "Stretch" opportunities.
+
+### 2. SCM (Semantic Contextual Mapping)
+Instead of simple keyword swapping, SCM analyzes the "Philosophy" of a JD (e.g., scale, low latency) and rewrites project bullet points to emphasize truthful alignment.
+
+---
+
+## 🚀 Setup & Installation
 
 ### Prerequisites
-- Node.js 18+
-- Discord Bot Token & Client ID
-- Google Gemini API Key
+- Node.js 20+
+- Telegram Bot Token (@BotFather)
+- OpenAI or Claude API Key (or OpenRouter)
 
-### Installation
-
-1. Clone the repository and install dependencies:
-```bash
-git clone https://github.com/adityakumargupta27/wingman.git
-cd wingman
-npm install
-```
-
-2. Configure environment:
-```bash
-cp .env.example .env
-# Edit .env and add DISCORD_TOKEN, DISCORD_CLIENT_ID, GEMINI_API_KEY
-```
-
-3. Register slash commands with Discord:
-```bash
-# Register to a specific dev server (instant)
-DISCORD_DEV_GUILD_ID=your_server_id npm run deploy
-
-# Or register globally (takes up to 1hr)
-npm run deploy
-```
-
-4. Run the bot:
-```bash
-npm start
-```
+### Quick Start
+1.  **Clone the Repo:**
+    ```bash
+    git clone https://github.com/adityakumargupta27/wingman.git
+    cd wingman
+    npm install
+    ```
+2.  **Environment Config:**
+    Create a `.env` file:
+    ```bash
+    TELEGRAM_TOKEN=your_token
+    OPENROUTER_API_KEY=your_key
+    DB_PATH=./data/wingman.db
+    ```
+3.  **Run the Bot:**
+    ```bash
+    npm run start
+    ```
 
 ---
 
-## 🚢 Deployment
-
-Wingman is ready to deploy to platforms like Railway or Fly.io.
-
-**Using Docker (Fly.io / Render):**
-A `Dockerfile` is included. It uses the `mcr.microsoft.com/playwright:v1.42.1-jammy` base image to ensure Playwright browser binaries are available. Note: Slash commands should be registered manually via `npm run deploy` before/during deployment.
-
-**Using PM2 (VPS):**
-```bash
-npm install pm2 -g
-pm2 start pm2.config.js
-```
-
----
-
-## 💻 Commands Reference
-
-| Command | Description |
-|---|---|
-| `/evaluate [url or jd]` | Evaluate a job against your CV (returns A-F score & thread report) |
-| `/scan [keyword]` | Scan portals for matching job opportunities (AI-powered) |
-| `/pdf [company] [role] [jd]` | Generate an ATS-optimized resume tailored to a specific job |
-| `/interview [role]` | Generate tailored interview questions based on your CV |
-| `/negotiate [company] [role]` | Get a tailored salary negotiation script |
-| `/tracker view` | View your application pipeline |
-| `/tracker update [id] [status]`| Update application status |
-| `/cv set` | Upload your CV (.txt file) |
-| `/cv show` | Display your saved CV |
+## 📈 Financial Roadmap (Scaling in India)
+| Category | Monthly Burn (INR) |
+| :--- | :--- |
+| **Residential Proxies** | ₹20,000 |
+| **LLM Tokens (High Tier)**| ₹75,000 |
+| **Infrastructure** | ₹5,000 |
+| **Total Runway** | **₹1,00,000/mo** |
 
 ---
 
 ## 📄 License
-MIT License
+MIT License • Build with grit in India by **Aditya Kumar Gupta**.
+
+---
+
+## 🔍 Deep Dive: Internal Processes
+
+### 1. Job Ingestion (The Scraper)
+The system handles a hybrid fetch strategy to ensure high-fidelity data from both structured APIs and dynamic web pages.
+
+```mermaid
+sequenceDiagram
+    participant S as Scheduler
+    participant L as LinkedIn (Headless)
+    participant A as ATS (JSON API)
+    participant N as Normalizer
+    participant DB as SQLite
+
+    S->>L: Navigate to Public Job Feed
+    L-->>S: HTML Source
+    S->>L: Auto-Scroll (Handle Lazy Load)
+    L-->>S: Full Job Cards
+    
+    S->>A: Fetch board.json (Greenhouse)
+    A-->>S: Raw JSON
+    
+    S->>N: Clean Titles & Dedup
+    N->>N: Velocity Check (Filter Ghost Jobs)
+    N-->>DB: Bulk Transaction (Upsert)
+```
+
+### 2. Match Scoring (WMDR Algorithm)
+A multi-layered evaluation that calculates a candidate's success probability.
+
+```mermaid
+flowchart LR
+    subgraph "Inputs"
+        J[Job Data]
+        P[User Profile]
+    end
+
+    subgraph "Scoring Layers"
+        S1[Skill Match: 30%]
+        S2[Experience: 20%]
+        S3[Role Match: 15%]
+        S4[Location: 10%]
+        S5[Freshness: 5%]
+    end
+
+    J & P --> S1 & S2 & S3 & S4 & S5
+    
+    S1 & S2 & S3 & S4 & S5 --> Agg[Weighted Aggregator]
+    Agg --> Result{Fit Score}
+    
+    Result -->|>85%| Push[Push Notification]
+    Result -->|<85%| Feed[Silent Job Feed]
+```
+
+### 3. Resume Tailoring (SCM Algorithm)
+How semantic mapping bridges the gap between project history and future JD requirements.
+
+```mermaid
+graph TD
+    A[Raw CV] -->|AI Analysis| B[Extract Project DNA]
+    C[Job JD] -->|AI Analysis| D[Extract Required Philosophy]
+    
+    B & D --> E[Concept Mapping]
+    E -->|Rewrite| F[Tailored Bullet Points]
+    
+    F --> G{User Choice}
+    G -->|PDF| H[html-pdf generator]
+    G -->|Word| I[docx-template generator]
+    
+    H & I --> J[Downloadable Link]
+```
+
+### 4. User Onboarding Lifecycle
+The state-machine for a new candidate entering the ecosystem.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Start: /start command
+    Start --> Profile: /cv [Upload PDF]
+    Profile --> Parsing: AI Profile Building
+    Parsing --> Verification: User Checks Skills
+    Verification --> Preferences: Set Location/Salary
+    Preferences --> Active: Ready for Matching
+    Active --> [*]
+```
